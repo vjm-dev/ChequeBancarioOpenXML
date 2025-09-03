@@ -41,9 +41,14 @@ namespace ChequeBancarioOpenXML
 
             try
             {
+                BarraProgreso progreso = new BarraProgreso();
+
                 using (WordprocessingDocument wordDocument = WordprocessingDocument.Create(
                     rutaDocumento, WordprocessingDocumentType.Document))
                 {
+                    progreso.Report(0.1, "Generando documento...");
+                    Thread.Sleep(100); // Pequeña pausa para visualización
+
                     // Agregar la parte principal del documento
                     MainDocumentPart mainPart = wordDocument.AddMainDocumentPart();
                     mainPart.Document = new Document(
@@ -62,15 +67,32 @@ namespace ChequeBancarioOpenXML
                         )
                     );
 
-                    // Agregar contenido al cheque
+                    progreso.Report(0.3, "Agregando encabezado...");
+                    Thread.Sleep(100);
                     mainPart.Document.Body!.Append(CrearEncabezado());
+
+                    progreso.Report(0.4, "Agregando datos de cuenta...");
+                    Thread.Sleep(100);
                     mainPart.Document.Body.Append(CrearSeccionDatosCuenta());
+
+                    progreso.Report(0.5, "Agregando información de importe...");
+                    Thread.Sleep(100);
                     mainPart.Document.Body.Append(CrearSeccionImporte());
+
+                    progreso.Report(0.6, "Agregando información de beneficiario...");
+                    Thread.Sleep(100);
                     mainPart.Document.Body.Append(CrearSeccionBeneficiario());
+
+                    progreso.Report(0.7, "Agregando sección de firmas...");
+                    Thread.Sleep(100);
                     mainPart.Document.Body.Append(CrearSeccionFirmas());
 
-                    // Guardar el documento
+                    progreso.Report(0.9, "Guardando documento...");
+                    Thread.Sleep(200);
                     mainPart.Document.Save();
+
+                    progreso.Report(1.0, "Completado");
+                    Thread.Sleep(300); // Pausa final para mostrar el 100%
                 }
             }
             catch (Exception ex)
