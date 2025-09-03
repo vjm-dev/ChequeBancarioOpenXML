@@ -1,0 +1,45 @@
+name: Build
+on:
+  push:
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        include:
+          - os: ubuntu-latest
+            runtime: linux-x64
+            archive_ext: tar.gz
+          - os: windows-latest
+            runtime: win-x64
+            archive_ext: zip
+          - os: macos-latest
+            runtime: osx-x64
+            archive_ext: tar.gz
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --no-restore --configuration Release
+
+      - name: Publish
+        run: dotnet publish --configuration Release --runtime ${{ matrix.runtime }} --self-contained true -p:PublishSingleFile=true -p:EnableCompressionInSingleFile=true -o published/${{ matrix.runtime }}
+
+      - name: Store artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: cheque-bancario-${{ matrix.runtime }}
+          path: published/${{ matrix.runtime }}
+          compression-level: 9
