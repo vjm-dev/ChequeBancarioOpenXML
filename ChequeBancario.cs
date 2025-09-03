@@ -2,24 +2,6 @@
 using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Wordprocessing;
 
-using BottomBorder = DocumentFormat.OpenXml.Wordprocessing.BottomBorder;
-using Break = DocumentFormat.OpenXml.Wordprocessing.Break;
-using Document = DocumentFormat.OpenXml.Wordprocessing.Document;
-using LeftBorder = DocumentFormat.OpenXml.Wordprocessing.LeftBorder;
-using Paragraph = DocumentFormat.OpenXml.Wordprocessing.Paragraph;
-using ParagraphProperties = DocumentFormat.OpenXml.Wordprocessing.ParagraphProperties;
-using RightBorder = DocumentFormat.OpenXml.Wordprocessing.RightBorder;
-using Run = DocumentFormat.OpenXml.Wordprocessing.Run;
-using RunProperties = DocumentFormat.OpenXml.Wordprocessing.RunProperties;
-using Table = DocumentFormat.OpenXml.Wordprocessing.Table;
-using TableCell = DocumentFormat.OpenXml.Wordprocessing.TableCell;
-using TableCellProperties = DocumentFormat.OpenXml.Wordprocessing.TableCellProperties;
-using TableProperties = DocumentFormat.OpenXml.Wordprocessing.TableProperties;
-using TableRow = DocumentFormat.OpenXml.Wordprocessing.TableRow;
-using TableStyle = DocumentFormat.OpenXml.Wordprocessing.TableStyle;
-using Text = DocumentFormat.OpenXml.Wordprocessing.Text;
-using TopBorder = DocumentFormat.OpenXml.Wordprocessing.TopBorder;
-
 namespace ChequeBancarioOpenXML
 {
     public class ChequeBancario
@@ -62,41 +44,33 @@ namespace ChequeBancarioOpenXML
                 using (WordprocessingDocument wordDocument = WordprocessingDocument.Create(
                     rutaDocumento, WordprocessingDocumentType.Document))
                 {
-                    // Agregar declaración XML con encoding UTF-8
-                    wordDocument.AddMainDocumentPart();
-                    wordDocument.MainDocumentPart!.Document = new Document();
-
-                    // Configurar encoding UTF-8 explícitamente
-                    wordDocument.MainDocumentPart.Document.Save();
-
-                    var body = new Body();
-
-                    // Configurar márgenes y tamaño de página
-                    SectionProperties sectionProps = new SectionProperties();
-                    PageMargin pageMargin = new PageMargin()
-                    {
-                        Top = 720,
-                        Right = 720,
-                        Bottom = 720,
-                        Left = 720,
-                        Header = 360,
-                        Footer = 360
-                    };
-                    sectionProps.Append(pageMargin);
+                    // Agregar la parte principal del documento
+                    MainDocumentPart mainPart = wordDocument.AddMainDocumentPart();
+                    mainPart.Document = new Document(
+                        new Body(
+                            new SectionProperties(
+                                new PageMargin()
+                                {
+                                    Top = 720,
+                                    Right = 720,
+                                    Bottom = 720,
+                                    Left = 720,
+                                    Header = 360,
+                                    Footer = 360
+                                }
+                            )
+                        )
+                    );
 
                     // Agregar contenido al cheque
-                    body.Append(CrearEncabezado());
-                    body.Append(CrearSeccionDatosCuenta());
-                    body.Append(CrearSeccionImporte());
-                    body.Append(CrearSeccionBeneficiario());
-                    body.Append(CrearSeccionFirmas());
+                    mainPart.Document.Body!.Append(CrearEncabezado());
+                    mainPart.Document.Body.Append(CrearSeccionDatosCuenta());
+                    mainPart.Document.Body.Append(CrearSeccionImporte());
+                    mainPart.Document.Body.Append(CrearSeccionBeneficiario());
+                    mainPart.Document.Body.Append(CrearSeccionFirmas());
 
-                    // Añadir la sección al cuerpo
-                    body.Append(sectionProps);
-                    wordDocument.MainDocumentPart.Document.Append(body);
-
-                    // Guardar con configuración UTF-8
-                    wordDocument.MainDocumentPart.Document.Save();
+                    // Guardar el documento
+                    mainPart.Document.Save();
                 }
             }
             catch (Exception ex)
@@ -110,39 +84,11 @@ namespace ChequeBancarioOpenXML
             Paragraph paragraph = new Paragraph();
             ParagraphProperties paragraphProperties = new ParagraphProperties();
             paragraphProperties.Append(new Justification() { Val = JustificationValues.Center });
-
-            Run run = new Run();
-            RunProperties runProperties = new RunProperties();
-            runProperties.Append(new Bold());
-            runProperties.Append(new FontSize() { Val = "28" });
-
-            // Configurar fuente compatible con Unicode
-            runProperties.Append(new RunFonts()
-            {
-                Ascii = "Arial",
-                HighAnsi = "Arial",
-                ComplexScript = "Arial"
-            });
-
-            run.RunProperties = runProperties;
-            run.Append(new Text(NombreBanco!));
-
             paragraph.Append(paragraphProperties);
-            paragraph.Append(run);
+
+            paragraph.Append(CrearRunConTexto(NombreBanco!, true, "28"));
             paragraph.Append(new Run(new Break()));
-
-            Run runSucursal = new Run();
-            RunProperties runPropsSucursal = new RunProperties();
-            runPropsSucursal.Append(new RunFonts()
-            {
-                Ascii = "Arial",
-                HighAnsi = "Arial",
-                ComplexScript = "Arial"
-            });
-            runSucursal.RunProperties = runPropsSucursal;
-            runSucursal.Append(new Text($"Sucursal: {Sucursal}"));
-
-            paragraph.Append(runSucursal);
+            paragraph.Append(CrearRunConTexto($"Sucursal: {Sucursal}", false, "20"));
 
             return paragraph;
         }
@@ -151,7 +97,6 @@ namespace ChequeBancarioOpenXML
         {
             Table table = new Table();
             TableProperties tableProperties = new TableProperties();
-            TableStyle tableStyle = new TableStyle() { Val = "TablaNormal" };
             TableWidth tableWidth = new TableWidth() { Width = "5000", Type = TableWidthUnitValues.Pct };
             TableBorders tableBorders = new TableBorders();
             tableBorders.Append(new TopBorder() { Val = BorderValues.Single, Size = 4 });
@@ -159,7 +104,7 @@ namespace ChequeBancarioOpenXML
             tableBorders.Append(new LeftBorder() { Val = BorderValues.Single, Size = 4 });
             tableBorders.Append(new RightBorder() { Val = BorderValues.Single, Size = 4 });
 
-            tableProperties.Append(tableStyle, tableWidth, tableBorders);
+            tableProperties.Append(tableWidth, tableBorders);
             table.Append(tableProperties);
 
             // Fila 1: Número de cuenta
@@ -252,13 +197,13 @@ namespace ChequeBancarioOpenXML
             // Lugar y fecha
             TableCell lugarFechaCell = new TableCell();
             Paragraph lugarFechaParagraph = new Paragraph();
-            lugarFechaParagraph.Append(new Run(new Text($"{LugarEmision}, {FechaEmision:dd/MM/yyyy}")));
+            lugarFechaParagraph.Append(CrearRunConTexto($"{LugarEmision}, {FechaEmision:dd/MM/yyyy}"));
             lugarFechaCell.Append(lugarFechaParagraph);
 
             // Firma (espacio en blanco)
             TableCell firmaCell = new TableCell();
             Paragraph firmaParagraph = new Paragraph();
-            firmaParagraph.Append(new Run(new Text("Firma:")));
+            firmaParagraph.Append(CrearRunConTexto("Firma:"));
             firmaParagraph.Append(new Run(new Break()));
 
             // Línea para firma
@@ -281,7 +226,7 @@ namespace ChequeBancarioOpenXML
             return table;
         }
 
-        private static TableCell CrearCeldaConTexto(string texto, bool negrita = false, int anchoColumna = 1)
+        private TableCell CrearCeldaConTexto(string texto, bool negrita = false, int anchoColumna = 1)
         {
             TableCell cell = new TableCell();
             TableCellProperties cellProperties = new TableCellProperties();
@@ -289,10 +234,18 @@ namespace ChequeBancarioOpenXML
             cell.TableCellProperties = cellProperties;
 
             Paragraph paragraph = new Paragraph();
+            paragraph.Append(CrearRunConTexto(texto, negrita, "20"));
+
+            cell.Append(paragraph);
+            return cell;
+        }
+
+        private Run CrearRunConTexto(string texto, bool negrita = false, string tamañoFuente = "20")
+        {
             Run run = new Run();
+            RunProperties runProperties = new RunProperties();
 
             // Configurar fuente compatible con Unicode
-            RunProperties runProperties = new RunProperties();
             runProperties.Append(new RunFonts()
             {
                 Ascii = "Arial",
@@ -305,12 +258,20 @@ namespace ChequeBancarioOpenXML
                 runProperties.Append(new Bold());
             }
 
-            run.RunProperties = runProperties;
-            run.Append(new Text(texto));
-            paragraph.Append(run);
-            cell.Append(paragraph);
+            if (!string.IsNullOrEmpty(tamañoFuente))
+            {
+                runProperties.Append(new FontSize() { Val = tamañoFuente });
+            }
 
-            return cell;
+            run.RunProperties = runProperties;
+
+            // Usar texto con espacio preservado para mantener caracteres especiales
+            run.Append(new Text(Utilidades.SanitizarTexto(texto))
+            {
+                Space = SpaceProcessingModeValues.Preserve
+            });
+
+            return run;
         }
     }
 }

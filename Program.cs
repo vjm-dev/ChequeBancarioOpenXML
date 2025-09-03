@@ -1,4 +1,5 @@
 ﻿using System.Globalization;
+using System.Text;
 
 namespace ChequeBancarioOpenXML
 {
@@ -8,10 +9,11 @@ namespace ChequeBancarioOpenXML
         {
             try
             {
-                Console.WriteLine("=== GENERADOR DE CHEQUES BANCARIOS ===\n");
+                // Configurar la codificación de la consola para Unicode, soporta caracteres como asiáticos, árabe, ruso, griego, etc...
+                Console.OutputEncoding = Encoding.Unicode;
+                Console.InputEncoding = Encoding.Unicode;
 
-                // Configurar la codificación de la consola para soportar caracteres especiales
-                Console.OutputEncoding = System.Text.Encoding.UTF8;
+                Console.WriteLine("=== GENERADOR DE CHEQUES BANCARIOS ===\n");
 
                 /*
                 ChequeBancario chequeTest = new ChequeBancario
@@ -25,7 +27,7 @@ namespace ChequeBancarioOpenXML
                     FechaEmision = DateTime.Now,
                     NombreBanco = "London Bank",
                     Sucursal = "UK London Centre",
-                    NumeroCuenta = "ES12 3456 7890 1234 5678 9012",
+                    NumeroCuenta = "UK12 3456 7890 1234 5678 9012",
                     ReferenciaTransferencia = "Bank loan"
                 };
                 */
@@ -34,19 +36,19 @@ namespace ChequeBancarioOpenXML
                 ChequeBancario cheque = new ChequeBancario();
 
                 Console.Write("Número de Cheque: ");
-                cheque.NumeroCheque = Console.ReadLine();
+                cheque.NumeroCheque = Utilidades.SanitizarTexto(Console.ReadLine()!);
 
                 Console.Write("Titular de la Cuenta: ");
-                cheque.TitularCuenta = Console.ReadLine();
+                cheque.TitularCuenta = Utilidades.SanitizarTexto(Console.ReadLine()!);
 
                 Console.Write("Dirección del Titular: ");
-                cheque.DireccionTitular = Console.ReadLine();
+                cheque.DireccionTitular = Utilidades.SanitizarTexto(Console.ReadLine()!);
 
                 Console.Write("Beneficiario: ");
-                cheque.Beneficiario = Console.ReadLine();
+                cheque.Beneficiario = Utilidades.SanitizarTexto(Console.ReadLine()!);
 
                 Console.Write("Referencia de Transferencia: ");
-                cheque.ReferenciaTransferencia = Console.ReadLine();
+                cheque.ReferenciaTransferencia = Utilidades.SanitizarTexto(Console.ReadLine()!);
 
                 Console.Write("Importe (ej: 1245,50): ");
                 decimal importe;
@@ -57,7 +59,7 @@ namespace ChequeBancarioOpenXML
                 cheque.Importe = importe;
 
                 Console.Write("Lugar de Emisión: ");
-                cheque.LugarEmision = Console.ReadLine();
+                cheque.LugarEmision = Utilidades.SanitizarTexto(Console.ReadLine()!);
 
                 Console.Write("Fecha de Emisión (dd/mm/aaaa) [Enter para hoy]: ");
                 string fechaInput = Console.ReadLine()!;
@@ -73,13 +75,13 @@ namespace ChequeBancarioOpenXML
                 }
 
                 Console.Write("Nombre del Banco: ");
-                cheque.NombreBanco = Console.ReadLine();
+                cheque.NombreBanco = Utilidades.SanitizarTexto(Console.ReadLine()!);
 
                 Console.Write("Sucursal: ");
-                cheque.Sucursal = Console.ReadLine();
+                cheque.Sucursal = Utilidades.SanitizarTexto(Console.ReadLine()!);
 
                 Console.Write("Número de Cuenta: ");
-                cheque.NumeroCuenta = Console.ReadLine();
+                cheque.NumeroCuenta = Utilidades.SanitizarTexto(Console.ReadLine()!);
 
                 // Convertir importe a palabras
                 cheque.ImporteEnPalabras = ConvertidorImporte.Convertir(cheque.Importe);
